@@ -1,0 +1,13 @@
+yfinance
+pandas
+numpy
+sqlalchemy
+fredapi
+ta
+requests
+matplotlib
+seaborn
+scikit-learn
+xgboost
+jupyter
+python-dotenv

@@ -1,0 +1,2 @@
+ann_return_pct,ann_vol_pct,sharpe,sortino,max_drawdown_pct,hist_var_95_pct,hist_cvar_95_pct,dollar_var_1M,beta_vs_sp500
+24.96,22.25,0.8967,1.0652,-39.13,1.824,3.295,"$18,240",1.0427
