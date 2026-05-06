@@ -1,11 +1,3 @@
-"""
-Module 1b — Fetch stock & benchmark prices from Yahoo Finance.
-Saves raw OHLCV data to the stock_prices and benchmark_prices tables.
-
-Usage:
-    python 02_fetch_stocks.py
-"""
-
 import yfinance as yf
 import pandas as pd
 from sqlalchemy import create_engine, text
@@ -22,7 +14,6 @@ DB_PATH = os.getenv("DB_PATH", "equity_data.db")
 
 
 def fetch_ticker(ticker: str, start: str, end: str) -> pd.DataFrame:
-    """Download OHLCV data for a single ticker. Compatible with yfinance 0.2.40+"""
     try:
         t = yf.Ticker(ticker)
         df = t.history(start=start, end=end, auto_adjust=False)
@@ -31,14 +22,11 @@ def fetch_ticker(ticker: str, start: str, end: str) -> pd.DataFrame:
             print(f"  WARNING: No data returned for {ticker}")
             return pd.DataFrame()
 
-        # Flatten MultiIndex columns if present
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
 
-        # Normalize column names to lowercase
         df.columns = [c.lower().replace(" ", "_") for c in df.columns]
 
-        # adj_close may be missing in some versions
         if "adj_close" not in df.columns and "close" in df.columns:
             df["adj_close"] = df["close"]
 
@@ -59,12 +47,11 @@ def fetch_ticker(ticker: str, start: str, end: str) -> pd.DataFrame:
 
 
 def save_prices(df: pd.DataFrame, engine, table_model, extra_cols=None):
-    """Upsert rows — skip duplicates on (ticker, date) constraint."""
     if df.empty:
         return 0
 
     with engine.connect() as conn:
-        # Use INSERT OR IGNORE for SQLite upsert
+
         cols = ["ticker", "date", "open", "high", "low", "close", "adj_close", "volume"]
         if extra_cols:
             cols = extra_cols
@@ -89,7 +76,7 @@ def fetch_all_stocks(engine):
             total += saved
         else:
             print("skipped")
-        time.sleep(0.3)   # be polite to the API
+        time.sleep(0.3)
 
     print(f"\nTotal stock rows saved: {total}")
 
@@ -101,7 +88,6 @@ def fetch_benchmark(engine):
         print("ERROR: Could not fetch benchmark data")
         return
 
-    # Calculate daily return for beta calculations later
     df = df.sort_values("date")
     df["daily_return"] = df["adj_close"].pct_change()
 

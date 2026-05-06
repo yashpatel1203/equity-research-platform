@@ -1,16 +1,3 @@
-"""
-Module 1c — Fetch macro indicators from FRED API.
-Saves to the macro_data table.
-
-You need a free FRED API key:
-  1. Go to https://fred.stlouisfed.org/docs/api/api_key.html
-  2. Create a free account and request a key
-  3. Add it to your .env file: FRED_API_KEY=your_key_here
-
-Usage:
-    python 03_fetch_macro.py
-"""
-
 import pandas as pd
 from fredapi import Fred
 from sqlalchemy import create_engine, text
@@ -26,7 +13,6 @@ FRED_KEY   = os.getenv("FRED_API_KEY", "")
 
 
 def fetch_fred_series(fred: Fred, series_name: str, series_id: str) -> pd.DataFrame:
-    """Fetch a single FRED series and return as a tidy DataFrame."""
     try:
         series = fred.get_series(series_id, observation_start=START_DATE, observation_end=END_DATE)
         df = series.reset_index()
@@ -41,15 +27,10 @@ def fetch_fred_series(fred: Fred, series_name: str, series_id: str) -> pd.DataFr
 
 
 def forward_fill_to_daily(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    FRED series like CPI and unemployment are monthly.
-    Forward-fill them to daily frequency so they can join with stock data.
-    """
     df = df.copy()
     df["date"] = pd.to_datetime(df["date"])
     df = df.set_index("date").sort_index()
 
-    # Create a full daily date range
     date_range = pd.date_range(start=START_DATE, end=END_DATE, freq="D")
     df = df.reindex(date_range).ffill()
     df.index.name = "date"
@@ -85,7 +66,6 @@ def fetch_all_macro(engine):
         print(f"  Fetching {series_name} ({series_id})...", end=" ")
         df = fetch_fred_series(fred, series_name, series_id)
         if not df.empty:
-            # Forward-fill monthly series to daily
             df = forward_fill_to_daily(df)
             saved = save_macro(df, engine)
             print(f"{saved} rows")
@@ -97,10 +77,6 @@ def fetch_all_macro(engine):
 
 
 def _generate_synthetic_macro(engine):
-    """
-    Fallback: generate realistic synthetic macro data when no FRED key is available.
-    Replace with real data once you have your API key.
-    """
     import numpy as np
     np.random.seed(42)
 

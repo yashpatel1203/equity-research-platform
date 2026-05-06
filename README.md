@@ -18,6 +18,7 @@ This platform analyses a **20-stock equal-weight portfolio** drawn from 5 S&P 50
 
 ---
 
+<<<<<<< HEAD
 ## 📸 Dashboard Preview
 
 ### Page 1 — Portfolio Performance
@@ -32,6 +33,8 @@ This platform analyses a **20-stock equal-weight portfolio** drawn from 5 S&P 50
 ### Page 4 — Executive Summary
 ![Executive Summary](screenshots/page4_executive_summary.png)
 
+=======
+>>>>>>> 427b5c6b74422654dc99f9a98150519cf5fe91b3
 ## 📁 Project Structure
 
 ```

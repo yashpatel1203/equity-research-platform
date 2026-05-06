@@ -1,21 +1,3 @@
-"""
-Module 2 — Portfolio Risk Analytics
-====================================
-Computes professional-grade risk metrics used on real trading desks:
-
-  1. Value at Risk (VaR)       — historical simulation + Monte Carlo
-  2. Expected Shortfall (CVaR) — average loss beyond VaR
-  3. Sharpe & Sortino Ratios   — risk-adjusted return
-  4. Maximum Drawdown          — worst peak-to-trough decline
-  5. Correlation Matrix        — cross-asset relationships
-  6. Beta & Alpha              — sensitivity vs S&P 500
-  7. Portfolio-level summary   — equal-weight portfolio metrics
-
-All results are printed as tables AND saved to risk_output/
-
-Usage:
-    python 05_risk_analytics.py
-"""
 
 import pandas as pd
 import numpy as np
@@ -84,11 +66,6 @@ def var_historical(returns: pd.Series, confidence: float = CONFIDENCE):
 
 
 def var_parametric(returns: pd.Series, confidence: float = CONFIDENCE):
-    """
-    Parametric (Variance-Covariance) VaR
-    Assumes normally distributed returns. Fast and commonly used in banking.
-    Underestimates tail risk during market stress (fat tails problem).
-    """
     mu, sig = returns.mean(), returns.std()
     z       = stats.norm.ppf(1 - confidence)
     var     = -(mu + z * sig)
@@ -99,11 +76,7 @@ def var_parametric(returns: pd.Series, confidence: float = CONFIDENCE):
 
 def var_monte_carlo(returns: pd.Series, confidence: float = CONFIDENCE,
                     n_sims: int = 10_000):
-    """
-    Monte Carlo VaR
-    Simulate thousands of possible 1-day returns from fitted distribution.
-    More flexible — can be extended to model fat tails, volatility clustering.
-    """
+
     mu, sig   = returns.mean(), returns.std()
     np.random.seed(42)
     simulated = np.random.normal(mu, sig, n_sims)
@@ -136,22 +109,14 @@ def compute_all_var(returns: pd.DataFrame) -> pd.DataFrame:
 # ── 3. Sharpe, Sortino, Calmar ────────────────────────────────────────────────
 
 def sharpe_ratio(returns: pd.Series, rf: float = RISK_FREE_RATE) -> float:
-    """
-    Sharpe Ratio = (Ann. Return - Rf) / Ann. Volatility
-    Penalises ALL volatility (up and down). Industry standard.
-    Rule of thumb: >1 good, >2 very good, >3 excellent.
-    """
+
     excess = returns.mean() * TRADING_DAYS - rf
     vol    = returns.std()  * np.sqrt(TRADING_DAYS)
     return round(excess / vol, 4) if vol > 0 else np.nan
 
 
 def sortino_ratio(returns: pd.Series, rf: float = RISK_FREE_RATE) -> float:
-    """
-    Sortino Ratio = (Ann. Return - Rf) / Downside Deviation
-    Only penalises NEGATIVE volatility. Preferred by hedge funds.
-    Better captures investor experience — upside volatility is not bad.
-    """
+
     excess       = returns.mean() * TRADING_DAYS - rf
     downside     = returns[returns < 0]
     downside_dev = downside.std() * np.sqrt(TRADING_DAYS)
@@ -159,10 +124,6 @@ def sortino_ratio(returns: pd.Series, rf: float = RISK_FREE_RATE) -> float:
 
 
 def calmar_ratio(returns: pd.Series) -> float:
-    """
-    Calmar Ratio = Ann. Return / |Max Drawdown|
-    Measures return earned per unit of drawdown risk.
-    """
     ann_ret = returns.mean() * TRADING_DAYS
     mdd     = max_drawdown(returns)
     return round(ann_ret / abs(mdd), 4) if mdd != 0 else np.nan
@@ -171,11 +132,7 @@ def calmar_ratio(returns: pd.Series) -> float:
 # ── 4. Drawdown ───────────────────────────────────────────────────────────────
 
 def max_drawdown(returns: pd.Series) -> float:
-    """
-    Maximum Drawdown = largest peak-to-trough decline in portfolio value.
-    If you had the worst possible timing (bought at peak, sold at trough),
-    this is how much you would have lost.
-    """
+
     cum         = (1 + returns).cumprod()
     rolling_max = cum.cummax()
     drawdown    = (cum - rolling_max) / rolling_max
@@ -185,7 +142,6 @@ def max_drawdown(returns: pd.Series) -> float:
 # ── 5. Beta & Alpha ───────────────────────────────────────────────────────────
 
 def compute_beta(stock: pd.Series, bench: pd.Series) -> float:
-    """Beta = Cov(stock, market) / Var(market)"""
     aligned = pd.concat([stock, bench], axis=1).dropna()
     if len(aligned) < 30:
         return np.nan
@@ -196,7 +152,6 @@ def compute_beta(stock: pd.Series, bench: pd.Series) -> float:
 
 def compute_alpha(stock: pd.Series, bench: pd.Series,
                   beta: float, rf: float = RISK_FREE_RATE) -> float:
-    """Jensen's Alpha: actual return minus CAPM-expected return."""
     ann_stock = stock.mean() * TRADING_DAYS
     ann_bench = bench.mean() * TRADING_DAYS
     return round(ann_stock - (rf + beta * (ann_bench - rf)), 4)

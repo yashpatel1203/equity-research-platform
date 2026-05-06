@@ -1,13 +1,3 @@
-"""
-Module 4b — Investment Memo (Python version)
-=============================================
-Generates a professional Word document investment memo.
-Uses python-docx — no Node.js required.
-
-Usage:
-    pip install python-docx
-    python 08_investment_memo.py
-"""
 
 import os
 import pandas as pd

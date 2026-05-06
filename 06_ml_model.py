@@ -1,24 +1,3 @@
-"""
-Module 3 — ML Signal Model
-===========================
-Predicts next-day return direction (Up/Down) using engineered features.
-Framed as a TRADING SIGNAL GENERATOR — not a magic predictor.
-
-Pipeline:
-  1. Load features from database
-  2. Feature selection & preprocessing
-  3. Walk-forward train/test split (no data leakage)
-  4. Train Random Forest + XGBoost classifiers
-  5. Cross-validate with TimeSeriesSplit
-  6. Evaluate: ROC-AUC, Precision, Recall, F1, Confusion Matrix
-  7. Feature importance (permutation-based)
-  8. Signal backtest — does following the signal make money?
-  9. Save all results + charts to ml_output/
-
-Usage:
-    pip install xgboost shap
-    python 06_ml_model.py
-"""
 
 import pandas as pd
 import numpy as np
@@ -74,7 +53,6 @@ TARGET_COL = "target_direction"
 # ── 1. Load data ──────────────────────────────────────────────────────────────
 
 def load_features(engine) -> pd.DataFrame:
-    """Load engineered features — uses connection object for pandas 3.x compatibility."""
     with engine.connect() as conn:
         df = pd.read_sql(
             text("""
@@ -96,7 +74,6 @@ def load_features(engine) -> pd.DataFrame:
 
 
 def add_price_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Price relative to moving averages — strong momentum signals."""
     df = df.copy()
     df["price_to_sma20"] = df["adj_close"] / df["sma_20"]  - 1
     df["price_to_sma50"] = df["adj_close"] / df["sma_50"]  - 1
@@ -105,7 +82,6 @@ def add_price_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_macro_features(df: pd.DataFrame, engine) -> pd.DataFrame:
-    """Join VIX and rate data — improves model during market stress periods."""
     try:
         with engine.connect() as conn:
             macro = pd.read_sql(
@@ -134,7 +110,6 @@ def add_macro_features(df: pd.DataFrame, engine) -> pd.DataFrame:
 
 
 def prepare_dataset(df: pd.DataFrame):
-    """Select features, drop NaN rows, return clean df + feature list."""
     extra_feat = ["price_to_sma20", "price_to_sma50", "sma20_to_sma50"]
     macro_feat = [c for c in df.columns if c.startswith("macro_")]
 
@@ -155,10 +130,6 @@ def prepare_dataset(df: pd.DataFrame):
 # ── 2. Walk-forward split ─────────────────────────────────────────────────────
 
 def walk_forward_split(df: pd.DataFrame, test_size: float = TEST_SIZE):
-    """
-    CRITICAL: always split on TIME, never randomly.
-    Random splits leak future data into training → fake inflated accuracy.
-    """
     df     = df.sort_values("date").reset_index(drop=True)
     cutoff = int(len(df) * (1 - test_size))
     train  = df.iloc[:cutoff].copy()
@@ -208,7 +179,6 @@ def build_models() -> dict:
 # ── 4. Cross-validation ───────────────────────────────────────────────────────
 
 def cross_validate_models(X_train, y_train, models: dict) -> pd.DataFrame:
-    """TimeSeriesSplit CV — never uses future data to validate."""
     tscv    = TimeSeriesSplit(n_splits=5)
     results = []
 
@@ -290,12 +260,6 @@ def get_feature_importance(model, feature_names: list, X_test, y_test) -> pd.Dat
 # ── 7. Signal backtest ────────────────────────────────────────────────────────
 
 def backtest_signal(model, X_test, test_df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Long-only signal strategy:
-      signal = 1 → go long (buy)
-      signal = 0 → stay flat (cash)
-    Compare vs buy-and-hold benchmark.
-    """
     results = test_df[["date", "ticker", "adj_close"]].copy()
     results["signal"]       = model.predict(X_test)
     results["signal_prob"]  = model.predict_proba(X_test)[:, 1]

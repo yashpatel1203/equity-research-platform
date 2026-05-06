@@ -1,18 +1,3 @@
-"""
-Module 4a — Professional Dashboard
-=====================================
-Generates a 4-page analyst-quality dashboard from all previous module outputs.
-Saves as high-resolution PNGs ready to present or import into Power BI / Tableau.
-
-Pages:
-  1. Portfolio Performance  — cumulative returns, drawdown, rolling Sharpe
-  2. Risk Heatmap           — VaR comparison, correlation matrix, risk-return scatter
-  3. ML Signal Tracker      — ROC curve, feature importance, signal backtest
-  4. Executive Summary      — key metrics table, sector exposure, top picks
-
-Usage:
-    python 07_dashboard.py
-"""
 
 import pandas as pd
 import numpy as np
@@ -63,7 +48,6 @@ SECTOR_MAP = {
 
 
 def set_style():
-    """Apply consistent matplotlib style across all charts."""
     plt.rcParams.update({
         "figure.facecolor":   C_WHITE,
         "axes.facecolor":     C_LIGHT,

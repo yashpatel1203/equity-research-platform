@@ -1,0 +1,27 @@
+# Environment
+.env
+*.env
+
+# Database — large file, not needed in repo
+equity_data.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Output folders — add your own screenshots selectively
+risk_output/
+ml_output/
+dashboard_output/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PyCharm
+.idea/
+*.iml

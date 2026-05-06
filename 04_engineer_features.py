@@ -1,20 +1,3 @@
-"""
-Module 1d — Feature engineering.
-Reads raw prices from stock_prices, computes all financial features,
-and writes results to the stock_features table.
-
-Features computed:
-  Returns      : daily, log, 5-day, 21-day
-  Volatility   : 21-day and 63-day rolling std
-  Trend        : SMA-20, SMA-50, EMA-12, EMA-26, MACD, signal line
-  Momentum     : RSI-14, Rate of Change 10
-  Volume       : 20-day avg volume, volume ratio
-  Risk         : rolling 63-day beta vs S&P 500
-  Target       : next-day return direction (1=up, 0=down) — used in ML module
-
-Usage:
-    python 04_engineer_features.py
-"""
 
 import pandas as pd
 import numpy as np
@@ -30,8 +13,6 @@ from schema_models import StockFeatures, create_database
 load_dotenv()
 DB_PATH = os.getenv("DB_PATH", "equity_data.db")
 
-
-# ── Helper: technical indicators ─────────────────────────────────────────────
 
 def compute_rsi(series: pd.Series, period: int = 14) -> pd.Series:
     delta = series.diff()
@@ -51,18 +32,12 @@ def compute_macd(series: pd.Series):
 
 
 def compute_beta(stock_returns: pd.Series, bench_returns: pd.Series, window: int = 63) -> pd.Series:
-    """Rolling beta using covariance / variance method."""
     cov = stock_returns.rolling(window).cov(bench_returns)
     var = bench_returns.rolling(window).var()
     return cov / var.replace(0, np.nan)
 
-
-# ── Main feature engineering ──────────────────────────────────────────────────
-
 def engineer_features(ticker: str, engine) -> pd.DataFrame:
-    """Load price data for one ticker and return a features DataFrame."""
 
-    # Load stock prices
     with engine.connect() as conn:
         prices = pd.read_sql(
             text(f"SELECT * FROM stock_prices WHERE ticker = :t ORDER BY date"),
@@ -71,7 +46,6 @@ def engineer_features(ticker: str, engine) -> pd.DataFrame:
     if prices.empty or len(prices) < 70:
         return pd.DataFrame()
 
-    # Load benchmark returns (for beta)
     with engine.connect() as conn:
         bench = pd.read_sql(
             text("SELECT date, daily_return FROM benchmark_prices ORDER BY date"),
